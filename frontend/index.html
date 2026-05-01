@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nguyễn Sơn Bakery Chatbot</title>
+    <meta name="description" content="Khung chat tư vấn bánh Nguyễn Sơn Bakery." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css?v=4" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <main class="chat-panel" id="chat-card">
+        <header class="chat-panel__header">
+          <h2>Trò chuyện với trợ lý</h2>
+          <button type="button" class="ghost-button" id="clear-chat">
+            Cuộc trò chuyện mới
+          </button>
+        </header>
+
+        <section class="chat-messages" id="chat-messages" aria-live="polite"></section>
+
+        <form id="chat-form" class="chat-form">
+          <label class="sr-only" for="chat-input">Nhập câu hỏi</label>
+          <div class="composer">
+            <textarea
+              id="chat-input"
+              rows="3"
+              enterkeyhint="send"
+              placeholder="Nhập câu hỏi về sản phẩm, giá, giao hàng hoặc yêu cầu xem ảnh..."
+            ></textarea>
+            <div class="composer__actions">
+              <p class="composer__hint">Enter để gửi, Shift+Enter để xuống dòng</p>
+              <button id="chat-submit" type="submit" class="send-button">
+                Gửi câu hỏi
+              </button>
+            </div>
+          </div>
+        </form>
+      </main>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
