@@ -60,10 +60,10 @@ function scopeLabel(scope) {
 function kindLabel(kind) {
   return (
     {
-      product: "Sáº£n pháº©m",
-      policy: "ChĂ­nh sĂ¡ch",
-      contact: "LiĂªn há»‡",
-    }[kind] || "Nguá»“n"
+      product: "Sản phẩm",
+      policy: "Chính sách",
+      contact: "Liên hệ",
+    }[kind] || "Nguồn"
   );
 }
 
@@ -75,7 +75,7 @@ function answerToHtml(answer) {
     .filter(Boolean);
 
   if (!lines.length) {
-    return "<p>ChÆ°a cĂ³ ná»™i dung tráº£ lá»i.</p>";
+    return "<p>Chưa có nội dung trả lời.</p>";
   }
 
   const chunks = [];
@@ -110,7 +110,7 @@ function productCardIntroHtml(answer) {
     .map((line) => line.trim())
     .find((line) => line && !/^[-*]\s+/.test(line));
 
-  return `<p>${escapeHtml(firstLine || "MĂ¬nh gá»£i Ă½ vĂ i lá»±a chá»n phĂ¹ há»£p vá»›i nhu cáº§u cá»§a báº¡n:")}</p>`;
+  return `<p>${escapeHtml(firstLine || "Mình gợi ý vài lựa chọn phù hợp với nhu cầu của bạn:")}</p>`;
 }
 
 function renderSources(sources, options = {}) {
@@ -124,7 +124,7 @@ function renderSources(sources, options = {}) {
   }
 
   return `
-    <div class="source-stack" aria-label="Nguá»“n tham chiáº¿u">
+    <div class="source-stack" aria-label="Nguồn tham chiếu">
       ${visibleSources
         .map(
           (source) => `
@@ -133,9 +133,9 @@ function renderSources(sources, options = {}) {
                 <span class="source-kind">${escapeHtml(kindLabel(source.kind))}</span>
                 <span class="badge">${escapeHtml(source.id || "S")}</span>
               </div>
-              <strong>${escapeHtml(source.title || "Nguá»“n tham chiáº¿u")}</strong>
+              <strong>${escapeHtml(source.title || "Nguồn tham chiếu")}</strong>
               ${source.snippet ? `<p>${escapeHtml(source.snippet)}</p>` : ""}
-              ${source.url ? `<a href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer">Má»Ÿ nguá»“n</a>` : ""}
+              ${source.url ? `<a href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer">Mở nguồn</a>` : ""}
             </article>
           `
         )
@@ -176,7 +176,7 @@ function renderAttachments(attachments) {
                 ${attachment.summary ? `<p>${escapeHtml(attachment.summary)}</p>` : ""}
                 ${
                   attachment.linkUrl
-                    ? `<a href="${escapeHtml(attachment.linkUrl)}" target="_blank" rel="noreferrer">Chi tiáº¿t</a>`
+                    ? `<a href="${escapeHtml(attachment.linkUrl)}" target="_blank" rel="noreferrer">Chi tiết</a>`
                     : ""
                 }
               </div>
@@ -193,7 +193,7 @@ function buildResponseMeta(payload) {
 }
 
 function renderMessageTitle(role) {
-  return `<p class="message-title">${role === "user" ? "Báº¡n" : "Trá»£ lĂ½"}</p>`;
+  return `<p class="message-title">${role === "user" ? "Bạn" : "Trợ lý"}</p>`;
 }
 
 function addMessage(role, options) {
@@ -230,37 +230,37 @@ function setStatus(health) {
 
   if (!health) {
     elements.statusBadge.classList.add("status-badge--offline");
-    elements.statusBadge.textContent = "ChÆ°a káº¿t ná»‘i";
+    elements.statusBadge.textContent = "Chưa kết nối";
     elements.statusDetail.textContent = "";
     return;
   }
 
   if (health.chatMode === "local-grounded") {
     elements.statusBadge.classList.add("status-badge--fallback");
-    elements.statusBadge.textContent = "Sáºµn sĂ ng";
+    elements.statusBadge.textContent = "Sẵn sàng";
   } else if (health.apiConfigured) {
     elements.statusBadge.classList.add("status-badge--ok");
-    elements.statusBadge.textContent = "Sáºµn sĂ ng";
+    elements.statusBadge.textContent = "Sẵn sàng";
   } else {
     elements.statusBadge.classList.add("status-badge--warn");
-    elements.statusBadge.textContent = "Sáºµn sĂ ng";
+    elements.statusBadge.textContent = "Sẵn sàng";
   }
 
   elements.statusDetail.textContent = "";
 }
 
 function updateStoreInfo(health) {
-  elements.brandName.textContent = health?.brand || "Nguyá»…n SÆ¡n Bakery";
+  elements.brandName.textContent = health?.brand || "Nguyễn Sơn Bakery";
 }
 
 function renderPrompts(prompts) {
   const safePrompts = prompts?.length
     ? prompts
     : [
-        "CĂ³ bĂ¡nh nĂ o dÆ°á»›i 50k khĂ´ng?",
-        "CĂ¡c mĂ³n Ä‘Æ°á»£c yĂªu thĂ­ch?",
-        "Cho mĂ¬nh xem áº£nh bĂ¡nh croissant",
-        "Shop giao hĂ ng nhÆ° tháº¿ nĂ o?",
+        "Có bánh nào dưới 50k không?",
+        "Các món được yêu thích?",
+        "Cho mình xem ảnh bánh croissant",
+        "Shop giao hàng như thế nào?",
       ];
 
   elements.promptList.innerHTML = safePrompts
@@ -273,23 +273,23 @@ function buildIntroMessage() {
   const health = state.health;
   if (!health?.storeInfo) {
     return `
-      <p>Xin chĂ o, mĂ¬nh lĂ  trá»£ lĂ½ tÆ° váº¥n cá»§a cá»­a hĂ ng bĂ¡nh.</p>
-      <p>Báº¡n cáº§n tĂ¬m loáº¡i bĂ¡nh nĂ o hoáº·c muá»‘n xem áº£nh sáº£n pháº©m nĂ o?</p>
+      <p>Xin chào, mình là trợ lý tư vấn của cửa hàng bánh.</p>
+      <p>Bạn cần tìm loại bánh nào hoặc muốn xem ảnh sản phẩm nào?</p>
     `;
   }
 
   return `
-    <p>${escapeHtml(health.welcomeMessage || "Xin chĂ o, mĂ¬nh lĂ  trá»£ lĂ½ tÆ° váº¥n cá»§a cá»­a hĂ ng.")}</p>
-    <p>Báº¡n cĂ³ thá»ƒ há»i vá» loáº¡i bĂ¡nh, má»©c giĂ¡, giao hĂ ng hoáº·c yĂªu cáº§u xem áº£nh sáº£n pháº©m.</p>
+    <p>${escapeHtml(health.welcomeMessage || "Xin chào, mình là trợ lý tư vấn của cửa hàng.")}</p>
+    <p>Bạn có thể hỏi về loại bánh, mức giá, giao hàng hoặc yêu cầu xem ảnh sản phẩm.</p>
   `;
 }
 
 function buildIntroHistoryText() {
   const health = state.health;
   if (!health?.storeInfo) {
-    return "Xin chĂ o, mĂ¬nh lĂ  trá»£ lĂ½ tÆ° váº¥n cá»§a cá»­a hĂ ng bĂ¡nh. Báº¡n cáº§n mĂ¬nh há»— trá»£ gĂ¬?";
+    return "Xin chào, mình là trợ lý tư vấn của cửa hàng bánh. Bạn cần mình hỗ trợ gì?";
   }
-  return health.welcomeMessage || "Xin chĂ o, mĂ¬nh lĂ  trá»£ lĂ½ tÆ° váº¥n cá»§a cá»­a hĂ ng. Báº¡n cáº§n mĂ¬nh há»— trá»£ gĂ¬?";
+  return health.welcomeMessage || "Xin chào, mình là trợ lý tư vấn của cửa hàng. Bạn cần mình hỗ trợ gì?";
 }
 
 function ensureIntro() {
@@ -307,7 +307,7 @@ function ensureIntro() {
 function setChatLoading(isLoading) {
   elements.chatInput.disabled = isLoading;
   elements.chatSubmit.disabled = isLoading;
-  elements.chatSubmit.textContent = isLoading ? "Äang gá»­i..." : "Gá»­i";
+  elements.chatSubmit.textContent = isLoading ? "Đang gửi..." : "Gửi";
 }
 
 function resetConversation() {
@@ -340,8 +340,8 @@ async function loadHealth() {
     renderPrompts([]);
     addMessage("assistant", {
       html: `
-        <p>Frontend chÆ°a gá»i Ä‘Æ°á»£c backend.</p>
-        <p>HĂ£y cháº¡y <strong>python backend/server.py</strong> rá»“i má»Ÿ láº¡i trang táº¡i <strong>http://127.0.0.1:8000</strong>.</p>
+        <p>Frontend chưa gọi được backend.</p>
+        <p>Hãy chạy <strong>python backend/server.py</strong> rồi mở lại trang tại <strong>http://127.0.0.1:8000</strong>.</p>
       `,
       meta: String(error.message || error),
     });
@@ -359,7 +359,7 @@ async function sendChat(query) {
   state.chatHistory.push({ role: "user", content: trimmed });
 
   const pending = addMessage("assistant", {
-    html: "<p>Äang xá»­ lĂ½ cĂ¢u há»i...</p>",
+    html: "<p>Đang xử lý câu hỏi...</p>",
     pending: true,
   });
 
@@ -396,8 +396,8 @@ async function sendChat(query) {
   } catch (error) {
     replaceMessage(pending, {
       html: `
-        <p>Hiá»‡n chÆ°a gá»i Ä‘Æ°á»£c backend chat.</p>
-        <p>HĂ£y kiá»ƒm tra láº¡i server local rá»“i thá»­ láº¡i.</p>
+        <p>Hiện chưa gọi được backend chat.</p>
+        <p>Hãy kiểm tra lại server local rồi thử lại.</p>
       `,
       meta: String(error.message || error),
     });
