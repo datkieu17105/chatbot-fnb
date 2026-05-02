@@ -1,6 +1,6 @@
 # Chatbot F&B AI
 
-Đây là project chatbot tư vấn F&B cho Nguyễn Sơn Bakery, xây theo hướng một bài thực hành Trí tuệ nhân tạo bằng Python. Chatbot có dữ liệu nội bộ, retrieval, workflow dạng graph, gọi Gemini khi có API key và vẫn chạy được ở chế độ local khi chưa có API key.
+Đây là project chatbot F&B sử dụng dữ liệu từ trang web của Nguyễn Sơn Bakery. Chatbot có dữ liệu nội bộ, retrieval, workflow dạng graph, gọi Gemini khi có API key và vẫn chạy được ở chế độ local khi chưa có API key.
 
 ## Chức năng chính
 
