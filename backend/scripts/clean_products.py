@@ -1,8 +1,11 @@
 import csv
 import json
+from pathlib import Path
 
-PRODUCTS_CSV = r"C:\Users\Kieu Doan Dat\VSCode\ChatbotF&B\output_nguyenson\products.csv"
-PRODUCTS_JSONL = r"C:\Users\Kieu Doan Dat\VSCode\ChatbotF&B\output_nguyenson\products.jsonl"
+BACKEND_DIR = Path(__file__).resolve().parents[1]
+RAW_DATA_DIR = BACKEND_DIR / "data" / "raw" / "nguyenson"
+PRODUCTS_CSV = RAW_DATA_DIR / "products.csv"
+PRODUCTS_JSONL = RAW_DATA_DIR / "products.jsonl"
 
 
 def safe_load_variants(text):

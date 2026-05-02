@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import importlib.util
 import os
 import re
 import unicodedata
@@ -10,10 +11,10 @@ from pathlib import Path
 from typing import Any
 
 
-ROOT_DIR = Path(__file__).resolve().parent
-STORE_DATA_PATH = ROOT_DIR / "data" / "store-data.json"
-ENV_PATH = ROOT_DIR / ".env"
-SYSTEM_PROMPT_PATH = ROOT_DIR / "bakery_system_prompt.txt"
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+STORE_DATA_PATH = BACKEND_DIR / "data" / "processed" / "store-data.json"
+ENV_PATH = BACKEND_DIR / ".env"
+SYSTEM_PROMPT_PATH = BACKEND_DIR / "app" / "prompts" / "bakery_system_prompt.txt"
 
 DEFAULT_MODEL = "gemini-2.5-flash"
 DEFAULT_SCOPE_MODE = "strict_bakery"
@@ -213,6 +214,8 @@ class BakeryChatbot:
         "gia",
         "mua",
         "dat hang",
+        "dat banh",
+        "order",
         "tu van",
         "phu kien",
         "sinh nhat",
@@ -237,6 +240,11 @@ class BakeryChatbot:
         "attp",
         "an toan",
         "ban hang",
+        "dat truoc",
+        "nhan dat truoc",
+        "dat hang",
+        "dat banh",
+        "order",
         "chinh sach",
         "vat",
         "hotline",
@@ -248,7 +256,7 @@ class BakeryChatbot:
     policy_title_aliases = {
         "Thanh toán & Giao hàng": ["giao hang", "ship", "van chuyen", "thanh toan", "chuyen khoan", "qr", "ma qr", "quet ma", "vat"],
         "Chính sách đổi trả": ["doi tra", "hoan tien", "tra hang"],
-        "Bán hàng": ["ban hang", "dat hang", "gio lam viec", "chiet khau"],
+        "Bán hàng": ["ban hang", "dat hang", "dat banh", "order", "gio lam viec", "chiet khau"],
         "Chính sách bảo mật": ["bao mat", "thong tin ca nhan", "cookie", "email"],
         "Chính sách chất lượng ATTP": ["attp", "an toan", "iso", "haccp", "chat luong"],
     }
@@ -286,6 +294,7 @@ class BakeryChatbot:
             "apiConfigured": bool(self.api_key),
             "model": self.model,
             "chatMode": "gemini-grounded" if self.api_key else "local-grounded",
+            "workflow": "langgraph" if importlib.util.find_spec("langgraph") else "local-graph",
             "scopeMode": self.scope_mode,
             "prompts": self.prompts[:6],
             "storeInfo": self._store_info(),
@@ -700,7 +709,7 @@ class BakeryChatbot:
     def _build_policy_chat_answer(self, query_norm: str, sources: list[dict[str, Any]]) -> str | None:
         shipping = self._find_policy_source(sources, "giao hang", "thanh toan", "vat")
         returns = self._find_policy_source(sources, "doi tra", "tra hang", "hoan tien")
-        sales = self._find_policy_source(sources, "ban hang", "gio lam viec", "dat truoc")
+        sales = self._find_policy_source(sources, "ban hang", "gio lam viec", "dat truoc", "dat hang", "dat banh")
         privacy = self._find_policy_source(sources, "bao mat", "thong tin ca nhan", "cookie")
         quality = self._find_policy_source(sources, "attp", "an toan", "iso", "haccp")
 
@@ -724,11 +733,16 @@ class BakeryChatbot:
                 f"Sản phẩm đã bán ra hiện chưa nhận lại; nếu có trường hợp cụ thể, bạn nên gọi hotline để cửa hàng hỗ trợ nhanh hơn{cite}."
             )
 
-        if any(term in query_norm for term in ("gio mo cua", "gio lam viec", "mo cua", "dat truoc", "thu bay", "chu nhat", "thu hai", "15:00")) and sales:
+        if any(term in query_norm for term in ("gio mo cua", "gio lam viec", "mo cua", "dat truoc", "dat hang", "dat banh", "order", "thu bay", "chu nhat", "thu hai", "15:00")) and sales:
             cite = f" [{sales['id']}]" if sales.get("id") else ""
             parts: list[str] = []
             if any(term in query_norm for term in ("gio mo cua", "gio lam viec", "mo cua", "mấy giờ", "may gio", "gio")):
                 parts.append(f"Cửa hàng mở từ 7:00 đến 19:00 mỗi ngày{cite}.")
+            if any(term in query_norm for term in ("dat hang", "dat banh", "order")):
+                parts.append(
+                    "Bạn cho mình biết loại bánh, số lượng và thời gian nhận hoặc giao mong muốn nhé. "
+                    "Nếu cần chốt đơn nhanh, bạn có thể liên hệ trực tiếp hotline cửa hàng."
+                )
             if any(term in query_norm for term in ("dat truoc", "thu bay", "chu nhat", "thu hai", "15:00", "giao kip", "giao dung", "hom sau")):
                 parts.append(
                     "Nếu bạn cần giao đủ và chính xác hơn thì nên đặt trước 1 ngày; "
@@ -1011,8 +1025,8 @@ class BakeryChatbot:
         if not context["inScope"]:
             return {
                 "answer": (
-                    "Mình hiện chỉ hỗ trợ câu hỏi về sản phẩm, giá, chính sách và thông tin liên hệ của Nguyễn Sơn Bakery. "
-                    "Nếu bạn muốn chatbot trả lời rộng như Gemini, có thể bật chế độ `hybrid_general` trong cấu hình."
+                    "Mình xin phép chỉ hỗ trợ thông tin liên quan đến Nguyễn Sơn Bakery như sản phẩm, giá, đặt bánh, "
+                    "giao hàng, thanh toán và liên hệ cửa hàng thôi nhé. Bạn cần mình tư vấn loại bánh nào không ạ?"
                 ),
                 "scope": "out_of_scope",
                 "source_ids": [],
@@ -1067,7 +1081,7 @@ class BakeryChatbot:
             return {
                 "answer": "\n".join(lines),
                 "scope": "grounded",
-                "source_ids": top_source_ids(kind="product", limit=3 if context["wantsImages"] else 4),
+                "source_ids": top_source_ids(kind="product", limit=6),
             }
 
         fallback = "Mình chưa tìm thấy dữ liệu đủ sát để trả lời chắc chắn. Bạn có thể nói rõ hơn về loại bánh, ngân sách hoặc nhu cầu."
@@ -1214,9 +1228,6 @@ class BakeryChatbot:
                     "linkUrl": source.get("url", ""),
                 }
             )
-            if len(attachments) == 3:
-                break
-
         return attachments
 
     def _friendly_fallback_note(self, exc: Exception | None = None) -> str:
@@ -1266,6 +1277,7 @@ class BakeryChatbot:
         history: list[dict[str, str]] | None = None,
     ) -> dict[str, Any]:
         answer = (raw.get("answer") or "").strip() or "Mình chưa thể tạo câu trả lời phù hợp ở thời điểm này."
+        answer = re.sub(r"\s*\[S\d+\]", "", answer).strip()
         scope = (raw.get("scope") or "grounded").strip().lower()
         if scope not in {"grounded", "partial", "out_of_scope", "general"}:
             scope = "grounded"
@@ -1276,6 +1288,17 @@ class BakeryChatbot:
             source_ids = []
         elif not source_ids:
             source_ids = list(source_lookup.keys())[:3]
+        elif scope in {"grounded", "partial"}:
+            product_source_ids = [
+                source_id
+                for source_id, source in source_lookup.items()
+                if source.get("kind") == "product" and source.get("imageUrl")
+            ]
+            for source_id in product_source_ids:
+                if source_id not in source_ids:
+                    source_ids.append(source_id)
+                if len([item for item in source_ids if source_lookup[item].get("kind") == "product"]) >= 6:
+                    break
 
         sources = [source_lookup[source_id] for source_id in source_ids]
         attachments = self._build_attachments(context, source_ids)
@@ -1294,48 +1317,6 @@ class BakeryChatbot:
         }
 
     def chat(self, query: str, history: list[dict[str, str]] | None = None) -> dict[str, Any]:
-        history = history or []
-        context = self._build_context(query, history)
-        source_lookup = {source["id"]: source for source in context["sources"]}
+        from app.chatbot.graph import BakeryChatbotGraph
 
-        if self._is_greeting(context["queryNorm"]) and self._assistant_already_greeted(history):
-            local = self._build_local_answer(query, context, history=history)
-            return self._finalize_response(local, source_lookup, "conversation-guard", context, query, history)
-
-        if not context["inScope"]:
-            if self.scope_mode == "hybrid_general" and self.api_key:
-                try:
-                    response = self._call_gemini_with_prompt(self._build_general_prompt(query, history))
-                    response["scope"] = "general"
-                    response["source_ids"] = []
-                    return self._finalize_response(response, source_lookup, f"{self.model} (general)", context, query, history)
-                except Exception:
-                    pass
-
-            local = self._build_local_answer(query, context, history=history)
-            return self._finalize_response(local, source_lookup, "scope-guard", context, query, history)
-
-        if not self.api_key:
-            local = self._build_local_answer(
-                query,
-                context,
-                api_note=self._friendly_fallback_note(None),
-                history=history,
-            )
-            return self._finalize_response(local, source_lookup, "local-grounded", context, query, history)
-
-        if self._is_popular_products_query(context["queryNorm"]) and context["productHits"]:
-            local = self._build_local_answer(query, context, history=history)
-            return self._finalize_response(local, source_lookup, "local-curated", context, query, history)
-
-        try:
-            response = self._call_gemini_with_prompt(self._build_grounded_prompt(query, history, context))
-            return self._finalize_response(response, source_lookup, self.model, context, query, history)
-        except Exception as exc:
-            local = self._build_local_answer(
-                query,
-                context,
-                api_note=self._friendly_fallback_note(exc),
-                history=history,
-            )
-            return self._finalize_response(local, source_lookup, "local-grounded", context, query, history)
+        return BakeryChatbotGraph(self).invoke(query, history or [])

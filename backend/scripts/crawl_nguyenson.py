@@ -4,6 +4,7 @@ import os
 import re
 import time
 from datetime import datetime
+from pathlib import Path
 from urllib.parse import urljoin
 
 import requests
@@ -12,7 +13,8 @@ from bs4 import BeautifulSoup
 
 BASE_URL = "https://nguyenson.vn"
 START_URL = "https://nguyenson.vn/"
-OUTPUT_DIR = r"C:\Users\Kieu Doan Dat\VSCode\ChatbotF&B\output_nguyenson"
+BACKEND_DIR = Path(__file__).resolve().parents[1]
+OUTPUT_DIR = BACKEND_DIR / "data" / "raw" / "nguyenson"
 
 HEADERS = {
     "User-Agent": (

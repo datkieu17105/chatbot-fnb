@@ -1,96 +1,219 @@
-# Chatbot F&B
+# Chatbot F&B AI
 
-Demo chatbot hỏi đáp dựa trên dữ liệu được thu thập từ website Nguyễn Sơn Bakery, với kiến trúc tách riêng `frontend/` và `backend/`.
+Đây là project chatbot tư vấn F&B cho Nguyễn Sơn Bakery, xây theo hướng một bài thực hành Trí tuệ nhân tạo bằng Python. Chatbot có dữ liệu nội bộ, retrieval, workflow dạng graph, gọi Gemini khi có API key và vẫn chạy được ở chế độ local khi chưa có API key.
 
-## Cấu trúc
+## Chức năng chính
+
+- Chat với khách bằng tiếng Việt.
+- Tư vấn sản phẩm, giá, loại bánh, chính sách giao hàng, thanh toán, đổi trả và thông tin liên hệ.
+- Trả lời dựa trên dữ liệu đã crawl từ website, không chỉ trả lời tự do.
+- Hiển thị nguồn tham chiếu và ảnh sản phẩm trong khung chat.
+- Có workflow theo hướng LangGraph: chuẩn bị context, route intent, gọi model hoặc fallback local, finalize response.
+- Có frontend demo chạy trực tiếp cùng backend.
+
+## Cấu trúc project
 
 ```text
 ChatbotF&B/
+├─ backend/
+│  ├─ app/
+│  │  ├─ server.py
+│  │  ├─ prompts/
+│  │  │  └─ bakery_system_prompt.txt
+│  │  └─ chatbot/
+│  │     ├─ state.py
+│  │     ├─ nodes.py
+│  │     ├─ graph.py
+│  │     └─ engine.py
+│  ├─ data/
+│  │  ├─ raw/nguyenson/
+│  │  └─ processed/store-data.json
+│  ├─ scripts/
+│  │  ├─ crawl_nguyenson.py
+│  │  ├─ clean_products.py
+│  │  └─ build_site_data.py
+│  ├─ .env.example
+│  └─ server.py
 ├─ frontend/
 │  ├─ index.html
 │  ├─ app.js
 │  └─ styles.css
-├─ backend/
-│  ├─ server.py
-│  ├─ chatbot_backend.py
-│  ├─ build_site_data.py
-│  ├─ bakery_system_prompt.txt
-│  ├─ data/
-│  └─ output_nguyenson/
+├─ requirements.txt
 └─ README.md
 ```
 
-## Điểm chính của bài
-
-- Frontend tập trung vào giao diện chat, hiển thị tin nhắn, ô nhập câu hỏi, ảnh sản phẩm và kết quả trả lời.
-- Backend xử lý dữ liệu đã crawl, retrieval, prompt, gọi Gemini nếu có API key, fallback local và trả về dữ liệu có nguồn tham chiếu.
-- Dữ liệu sản phẩm và chính sách được build từ bộ crawl trong `backend/output_nguyenson/`.
-- Nếu nguồn trả về là sản phẩm, frontend có thể hiển thị card sản phẩm và hình ảnh; với nguồn chính sách/liên hệ thì chỉ hiển thị nội dung trả lời để giao diện gọn hơn.
-
-## Cấu hình file .env
-
-Tạo file `.env` trong thư mục `backend/`:
+## Luồng xử lý chatbot
 
 ```text
-ChatbotF&B/
-└─ backend/
-   └─ .env
+Người dùng nhập câu hỏi
+  -> POST /api/chat
+  -> prepare_context: chuẩn hóa câu hỏi, tìm sản phẩm/chính sách phù hợp
+  -> route: chọn nhánh xử lý
+  -> conversation_guard | scope_guard | local_grounded | local_curated | model_grounded | general
+  -> finalize: chuẩn hóa answer, sources, attachments
+  -> frontend hiển thị câu trả lời, nguồn và ảnh
 ```
 
-Nội dung mẫu:
+Các file quan trọng:
 
-```env
-GEMINI_API_KEY=your_gemini_api_key_here
-GEMINI_MODEL=gemini-2.5-flash
-GEMINI_TIMEOUT_SECONDS=45
-```
-
-Nếu không có `GEMINI_API_KEY`, hệ thống vẫn chạy ở chế độ `local-grounded`. Chế độ này vẫn trả lời được dựa trên dữ liệu cục bộ, nhưng khả năng hiểu câu hỏi ngoài phạm vi sẽ hạn chế hơn.
-
-Không đưa file `.env` lên GitHub/GitLab vì file này có thể chứa API key. File `.gitignore` đã chặn `.env`, log và cache Python.
+- `backend/app/chatbot/state.py`: định nghĩa state cho workflow.
+- `backend/app/chatbot/nodes.py`: các node xử lý.
+- `backend/app/chatbot/graph.py`: lắp workflow bằng LangGraph nếu đã cài, fallback local graph nếu chưa cài.
+- `backend/app/chatbot/engine.py`: load dữ liệu, retrieval, prompt, gọi Gemini, format kết quả.
+- `backend/app/server.py`: API server và static server cho frontend.
+- `frontend/app.js`: logic chat trên trình duyệt.
 
 ## Cách chạy nhanh
 
-1. Cài hoặc kiểm tra Python.
-2. Tạo file `backend/.env` nếu muốn dùng Gemini.
-3. Build lại dữ liệu nếu cần:
+Mở PowerShell tại thư mục project:
 
 ```powershell
-python backend/build_site_data.py
+cd "C:\Users\Kieu Doan Dat\VSCode\ChatbotF&B"
 ```
 
-4. Chạy server:
+Tạo virtual environment:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
+
+Cài thư viện:
+
+```powershell
+pip install -r requirements.txt
+```
+
+Chạy server:
 
 ```powershell
 python backend/server.py
 ```
 
-5. Mở trình duyệt:
+Giữ nguyên cửa sổ terminal này trong lúc dùng chatbot. Nếu đóng terminal hoặc nhấn `Ctrl+C`, backend sẽ tắt và frontend sẽ báo `Backend chưa kết nối`.
+
+Mở trình duyệt:
 
 ```text
 http://127.0.0.1:8000
 ```
 
-Server backend sẽ phục vụ luôn frontend, nên chỉ cần một lệnh chạy để demo đầy đủ.
+Nếu port 8000 đang bận:
 
-## API chính
+```powershell
+python backend/server.py --port 8001
+```
 
-- `GET /api/health`: trả về cấu hình chatbot, số lượng nguồn dữ liệu và thông tin cửa hàng.
-- `POST /api/chat`: nhận `message` và `history`, trả về `answer`, `sources`, `attachments`, `scope`, `usedModel`.
+Sau đó mở:
 
-## Gợi ý demo khi thuyết trình
+```text
+http://127.0.0.1:8001
+```
 
-- `Các món nào được yêu thích?`
+Không mở trực tiếp file `frontend/index.html` nếu chưa chắc backend đang chạy. Cách ổn định nhất là luôn mở bằng URL do server in ra, ví dụ `http://127.0.0.1:8000`.
+
+## Chạy không cần API key
+
+Project vẫn chạy nếu chưa có Gemini API key. Khi đó chatbot dùng chế độ `local-grounded`, tức là trả lời dựa trên dữ liệu local và rule/retrieval có sẵn.
+
+Lệnh chạy vẫn là:
+
+```powershell
+python backend/server.py
+```
+
+## Chạy với Gemini API key
+
+Copy file mẫu:
+
+```powershell
+Copy-Item backend\.env.example backend\.env
+```
+
+Mở `backend/.env` và điền:
+
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-2.5-flash
+GEMINI_TIMEOUT_SECONDS=45
+CHATBOT_SCOPE_MODE=strict_bakery
+```
+
+Chạy lại server:
+
+```powershell
+python backend/server.py
+```
+
+Kiểm tra health:
+
+```text
+http://127.0.0.1:8000/api/health
+```
+
+Nếu `apiConfigured` là `true`, chatbot đã nhận API key.
+
+## Build lại dữ liệu
+
+Khi muốn build lại knowledge base từ dữ liệu raw:
+
+```powershell
+python backend/scripts/build_site_data.py
+```
+
+Output chính:
+
+```text
+backend/data/processed/store-data.json
+```
+
+Nếu muốn crawl lại từ website:
+
+```powershell
+python backend/scripts/crawl_nguyenson.py
+python backend/scripts/clean_products.py
+python backend/scripts/build_site_data.py
+```
+
+## API
+
+Health:
+
+```http
+GET /api/health
+```
+
+Chat:
+
+```http
+POST /api/chat
+Content-Type: application/json
+
+{
+  "message": "Cho mình xem ảnh bánh croissant",
+  "history": []
+}
+```
+
+Response chính gồm:
+
+- `answer`: câu trả lời.
+- `scope`: loại câu trả lời, ví dụ `grounded`, `partial`, `out_of_scope`, `general`.
+- `sources`: nguồn tham chiếu.
+- `attachments`: ảnh sản phẩm nếu có.
+- `usedModel`: model hoặc nhánh fallback đã dùng.
+
+## Câu hỏi demo
+
 - `Có bánh nào dưới 50k không?`
-- `Cho mình xem vài loại cookies nhé`
+- `Các món nào được yêu thích?`
 - `Cho mình xem ảnh bánh croissant`
-- `Mình cần đặt bánh trước bao lâu?`
+- `Cho mình xem vài loại cookies nhé`
+- `Shop giao hàng như thế nào?`
+- `Mình chuyển khoản được không?`
 - `Cửa hàng mở cửa lúc mấy giờ?`
-- `Tư vấn cho mình mua điện thoại mới, có cấu hình tốt`
+- `Tư vấn cho mình mua điện thoại mới`
 
 ## Ghi chú
 
-- Dữ liệu trong project được lấy từ website Nguyễn Sơn Bakery để xây dựng chatbot thử nghiệm, không phải chatbot chính thức của thương hiệu.
-- Nếu không có `GEMINI_API_KEY`, hệ thống chạy ở chế độ `local-grounded`.
-- Với câu hỏi ngoài phạm vi, chế độ `local-grounded` có thể fallback sang gợi ý sản phẩm thay vì từ chối chính xác. Đây là hạn chế của phiên bản thử nghiệm và có thể cải thiện bằng bước nhận diện câu hỏi ngoài miền.
-- Frontend có thể mở riêng, nhưng cách ổn định nhất để nộp bài/demo là chạy qua `python backend/server.py`.
+Đây là project thực hành, không phải chatbot chính thức của Nguyễn Sơn Bakery. Mục tiêu chính là minh họa cách xây chatbot AI có dữ liệu nền, retrieval, nguồn tham chiếu, workflow dạng graph và frontend demo hoàn chỉnh.

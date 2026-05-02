@@ -9,10 +9,9 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 
-ROOT_DIR = Path(__file__).resolve().parent
-DATA_DIR = ROOT_DIR / "output_nguyenson"
-DATA_OUTPUT_DIR = ROOT_DIR / "data"
-OUTPUT_JS = DATA_OUTPUT_DIR / "store-data.js"
+BACKEND_DIR = Path(__file__).resolve().parents[1]
+DATA_DIR = BACKEND_DIR / "data" / "raw" / "nguyenson"
+DATA_OUTPUT_DIR = BACKEND_DIR / "data" / "processed"
 OUTPUT_JSON = DATA_OUTPUT_DIR / "store-data.json"
 
 PRODUCTS_CSV = DATA_DIR / "products.csv"
@@ -593,13 +592,11 @@ def write_output_files(site_data: dict[str, object]) -> None:
 
     json_payload = json.dumps(site_data, ensure_ascii=False, indent=2)
     OUTPUT_JSON.write_text(json_payload, encoding="utf-8")
-    OUTPUT_JS.write_text(f"window.__STORE_DATA__ = {json_payload};\n", encoding="utf-8")
 
 
 def main() -> None:
     site_data = build_site_data()
     write_output_files(site_data)
-    print(f"Built {OUTPUT_JS}")
     print(f"Built {OUTPUT_JSON}")
 
 
